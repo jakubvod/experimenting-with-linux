@@ -15,3 +15,6 @@
 > ⚠️ Note: It only works in specific `auth.log` format (I've tested it on my Linux Mint) + it currently assumes the logs file is located at `/var/log/auth.log`.
 
 ### 🔧 Setup
+1. Navigate to the folder: `cd log_analyzer`
+2. Run the the script: `./auth_analyzer.sh`
+3. The script will generate a `.txt` file with the analysis results.
