@@ -1,4 +1,4 @@
-#🛠️ PROJECTS
+# 🛠️ PROJECTS
 
 ## SSH & SUDO LOG ANALYZER
 - A security tool that automatically parses system authentication logs to identify potential breach attempts.
@@ -14,4 +14,4 @@
 
 > ⚠️ Note: It only works in specific `auth.log` format (I've tested it on my Linux Mint) + it currently assumes the logs file is located at `/var/log/auth.log`.
 
-# 🔧 Setup
+## 🔧 Setup
