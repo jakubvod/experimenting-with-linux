@@ -25,7 +25,7 @@ def analyzer(filename: str) -> None:
     # EXAMPLE: 2026-02-10T22:15:51.181649+01:00 jacob-DEVICENAME sshd[9959]: Failed password for jacob from IP_ADRESS port PORT ssh2
     ssh_pattern: str = r"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}).*Failed password for\s+(\w+)\s+from\s+([\d.]*)"
     # EXAMPLE: 2026-02-10T22:06:24.299263+01:00 jacob-DEVICENAME sudo: jacob : 3 incorrect password attempts ; TTY=pts/0 ; PWD=/home/jacob/Desktop/script ; USER=root ; COMMAND=/usr/bin/ls
-    sudo_pattern: str = r"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}).*sudo:\s+(\w+)\s+:\s+(\d+)\s+incorrect password attempts.*COMMAND=(.*)$"
+    sudo_pattern: str = r"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}).*sudo:\s+(\w+)\s+:\s+(\d+)\s+incorrect password attempt.*COMMAND=(.*)$"
  
     try:
         with open(filename, "r") as log_file:
