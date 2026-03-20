@@ -2,6 +2,13 @@ import sys
 import os
 import re
 
+PATTERNS: dict[str, str] = {
+    # EXAMPLE: 2026-02-10T22:15:51.181649+01:00 jacob-DEVICENAME sshd[9959]: Failed password for jacob from IP_ADRESS port PORT ssh2
+    "SSH": r"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}).*Failed password for\s+(\w+)\s+from\s+([\d.]*)",
+    # EXAMPLE: 2026-02-10T22:06:24.299263+01:00 jacob-DEVICENAME sudo: jacob : 3 incorrect password attempts ; TTY=pts/0 ; PWD=/home/jacob/Desktop/script ; USER=root ; COMMAND=/usr/bin/ls
+    "SUDO": r"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}).*sudo:\s+(\w+)\s+:\s+(\d+)\s+incorrect password attempt.*COMMAND=(.*)$"
+    }
+
 
 def prepare_result(possible_breaches: dict[str, dict[str, list[str | int]]]) -> str:
     result: str = "\nRESULTS\n\n"
@@ -11,27 +18,25 @@ def prepare_result(possible_breaches: dict[str, dict[str, list[str | int]]]) -> 
         # data = [date, time, username, attempts]
         result += f"IP: {ip} | USERNAME: {data[2]} | ATTEMPTS: {data[3]} | TIME: {data[1]} | DATE: {data[0]}\n" 
     result += "\nPOSSIBLE BREACHES (SUDO):\n"
-    for username, data in possible_breaches["SUDO"].items():
-         # data = [date, time, command, attempts]
+
+    for key, data in possible_breaches["SUDO"].items(): 
+        # data = [date, time, command, attempts]
+        username, command = key
         result += f"USERNAME: {username} | COMMAND: {data[2]} | ATTEMPTS: {data[3]} | TIME: {data[1]} | DATE: {data[0]}\n"
     return result
 
-def analyzer(filename: str) -> None:
+def analyzer(filename: str, patterns: dict[str, str]) -> None:
     if not os.path.isfile(filename):
         print(f"File '{filename}' doesn't exist or it's not a file.")
         return
 
-    possible_breaches: dict[str, dict[str, list[str | int]]] = {"SSH": {}, "SUDO": {}}
-    # EXAMPLE: 2026-02-10T22:15:51.181649+01:00 jacob-DEVICENAME sshd[9959]: Failed password for jacob from IP_ADRESS port PORT ssh2
-    ssh_pattern: str = r"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}).*Failed password for\s+(\w+)\s+from\s+([\d.]*)"
-    # EXAMPLE: 2026-02-10T22:06:24.299263+01:00 jacob-DEVICENAME sudo: jacob : 3 incorrect password attempts ; TTY=pts/0 ; PWD=/home/jacob/Desktop/script ; USER=root ; COMMAND=/usr/bin/ls
-    sudo_pattern: str = r"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}).*sudo:\s+(\w+)\s+:\s+(\d+)\s+incorrect password attempt.*COMMAND=(.*)$"
- 
+    possible_breaches: dict[str | tuple[str, str], dict[str, list[str | int]]] = {"SSH": {}, "SUDO": {}}
+    
     try:
         with open(filename, "r") as log_file:
             for line in log_file:
-                ssh_match = re.search(ssh_pattern, line)
-                sudo_match = re.search(sudo_pattern, line)
+                ssh_match = re.search(patterns["SSH"], line)
+                sudo_match = re.search(patterns["SUDO"], line)
                 
                 if ssh_match:
                     date = ssh_match.group(1)
@@ -51,10 +56,12 @@ def analyzer(filename: str) -> None:
                     all_attempts = sudo_match.group(4)
                     command = sudo_match.group(5)
                     
-                    if username in possible_breaches["SUDO"]:
-                        possible_breaches["SUDO"][username][3] += int(all_attempts) # Invalid attempt
+                    key = (username, command)
+                    
+                    if key in possible_breaches["SUDO"]:
+                        possible_breaches["SUDO"][key][3] += int(all_attempts) # Invalid attempt
                     else:
-                        possible_breaches["SUDO"][username] = [date, time, command, int(all_attempts)]
+                        possible_breaches["SUDO"][key] = [date, time, command, int(all_attempts)]
     except Exception as e:
         print(f"Error during reading: {e}")
         return
@@ -71,6 +78,6 @@ def analyzer(filename: str) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
-        analyzer(sys.argv[1])
+        analyzer(sys.argv[1], PATTERNS)
     else:
         print("Too few arguments.")
